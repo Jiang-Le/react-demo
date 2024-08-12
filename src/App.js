@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-function Square({idx, value, handleSquareClick}) {
-  return <button className="square" onClick={()=>handleSquareClick(idx)}>{value}</button>;
+function Square({value, handleSquareClick}) {
+  return <button className="square" onClick={handleSquareClick}>{value}</button>;
 }
 
 function Board({row, col, boardValues, onCellClick}) {
@@ -17,9 +17,9 @@ function Board({row, col, boardValues, onCellClick}) {
     for (let j = 0; j < col; j++) {
       let idx = i*col+j
       let value = boardValues[idx]
-      cols.push(<Square idx={idx} value={value} handleSquareClick={handleSquareClick}/>)
+      cols.push(<Square key={idx} value={value} handleSquareClick={() => handleSquareClick(idx)}/>)
     }
-    board.push(<div className="board-row">{cols}</div>)
+    board.push(<div key={i} className="board-row">{cols}</div>)
   }
 
   return <>
@@ -37,17 +37,36 @@ function StateBanner({winner, nextPlayer}) {
   return <div className='status'>{state}</div>
 }
 
+function HistoryPanel({historys, jumpTo}) {
+  let moves = historys.map((boardValues, step) => {
+    let desc;
+    if (step > 0) {
+      desc = "Go to move #" + step
+    } else {
+      desc = "Go to game start"
+    }
+    return <li key={step}>
+      <button onClick={() => jumpTo(step)}>{desc}</button>
+    </li>
+  })
+  return <ol>
+    {moves}
+  </ol>
+}
+
 export default function Game() {
-  const [row, col] = [3, 3]
-  const [boardValues, setBoardValues] = useState(Array(row*col).fill(null))
-  const [step, setStep] = useState(0)
+  let [row, col] = [3, 3]
+  const [history, setHistory] = useState([Array(row*col).fill(null)])
+  const [curStep, setCurStep] = useState(0)
+
+  const boardValues = history.at(curStep)
 
   const winnerPos = findWinner(boardValues)
   let winner = null
   if (winnerPos) {
     winner = boardValues[winnerPos[0]]
   }
-  let nextPlayer = calculatePlayer(step)
+  let nextPlayer = calculatePlayer(curStep)
 
   function handleCellClick(r, c) {
     const idx = r * col + c
@@ -60,9 +79,13 @@ export default function Game() {
     }
 
     const next = boardValues.slice()
-    next[idx] = calculatePlayer(step)
-    setStep(step + 1)
-    setBoardValues(next)
+    next[idx] = calculatePlayer(curStep)
+    setCurStep(curStep + 1)
+    setHistory([...history.slice(0, curStep+1), next])
+  }
+
+  function jumpTo(step) {
+    setCurStep(step)
   }
 
   function calculatePlayer(currentStep) {
@@ -76,7 +99,7 @@ export default function Game() {
         <Board row={3} col={3} boardValues={boardValues} onCellClick={handleCellClick}/>
       </div>
       <div className='game-info'>
-
+        <HistoryPanel historys={history} jumpTo={jumpTo}/>
       </div>
     </div>
   )
