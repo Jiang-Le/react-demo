@@ -4,62 +4,82 @@ function Square({idx, value, handleSquareClick}) {
   return <button className="square" onClick={()=>handleSquareClick(idx)}>{value}</button>;
 }
 
-function Board({row, col}) {
-
-  const [squareValues, setSquareValues] = useState(Array(row*col).fill(null))  
-  const [step, setStep] = useState(0)
-
-  const winnerPos = findWinner(squareValues)
-  let winner = null
-  if (winnerPos) {
-    winner = squareValues[winnerPos[0]]
-  }
-
-  let state = null
-  if (winner) {
-    state = "Winner: " + winner
-  } else {
-    state = "Next player: " + calculatePlayer(step)
-  }
-
-
+function Board({row, col, boardValues, onCellClick}) {
   function handleSquareClick(idx) {
-    if (findWinner(squareValues)) {
-      return
-    }
-    if (squareValues[idx]) {
-      return
-    }
-    const nextSquare = squareValues.slice()
-    nextSquare[idx] = calculatePlayer(step)
-    setStep(step + 1)
-    setSquareValues(nextSquare)
+    const r = parseInt(idx / col)
+    const c = idx % col
+    onCellClick(r, c)
   }
-
-  function calculatePlayer(currentStep) {
-    return currentStep % 2 === 0 ? 'X' : 'O'
-  }
-
 
   let board = [];
   for (let i = 0; i < row; i++) {
     let cols = [];
     for (let j = 0; j < col; j++) {
       let idx = i*col+j
-      let value = squareValues[idx]
+      let value = boardValues[idx]
       cols.push(<Square idx={idx} value={value} handleSquareClick={handleSquareClick}/>)
     }
     board.push(<div className="board-row">{cols}</div>)
   }
 
   return <>
-    <div className="status">{state}</div>
     {board}
   </>
 }
 
+function StateBanner({winner, nextPlayer}) {
+  let state = null;
+  if (winner) {
+    state = "Winner: " + winner
+  } else {
+    state = "Next player: " + nextPlayer
+  }
+  return <div className='status'>{state}</div>
+}
+
 export default function Game() {
-  return <><Board row={3} col={3}/></>
+  const [row, col] = [3, 3]
+  const [boardValues, setBoardValues] = useState(Array(row*col).fill(null))
+  const [step, setStep] = useState(0)
+
+  const winnerPos = findWinner(boardValues)
+  let winner = null
+  if (winnerPos) {
+    winner = boardValues[winnerPos[0]]
+  }
+  let nextPlayer = calculatePlayer(step)
+
+  function handleCellClick(r, c) {
+    const idx = r * col + c
+
+    if (winner) {
+      return
+    }
+    if (boardValues[idx]) {
+      return
+    }
+
+    const next = boardValues.slice()
+    next[idx] = calculatePlayer(step)
+    setStep(step + 1)
+    setBoardValues(next)
+  }
+
+  function calculatePlayer(currentStep) {
+    return currentStep % 2 === 0 ? 'X' : 'O'
+  }
+
+  return (
+    <div className='game'>
+      <div className='game-board'>
+        <StateBanner winner={winner} nextPlayer={nextPlayer}/>
+        <Board row={3} col={3} boardValues={boardValues} onCellClick={handleCellClick}/>
+      </div>
+      <div className='game-info'>
+
+      </div>
+    </div>
+  )
 }
 
 function findWinner(squares) {
