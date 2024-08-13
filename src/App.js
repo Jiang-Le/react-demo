@@ -38,6 +38,7 @@ function StateBanner({winner, nextPlayer}) {
 }
 
 function HistoryPanel({historys, jumpTo}) {
+  const [ascOrder, setAscOrder] = useState(true)
   let moves = historys.map((boardValues, step) => {
     let desc;
     if (step > 0) {
@@ -49,7 +50,11 @@ function HistoryPanel({historys, jumpTo}) {
       <button onClick={() => jumpTo(step)}>{desc}</button>
     </li>
   })
+  if (!ascOrder) {
+    moves = moves.reverse()
+  }
   return <ol>
+    <button onClick={()=>setAscOrder(!ascOrder)}>{ascOrder ? "降序⬇️":"升序⬆️"}</button>
     {moves}
   </ol>
 }
