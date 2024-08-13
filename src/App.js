@@ -1,14 +1,26 @@
 import { useState } from 'react';
 
-function Square({value, handleSquareClick}) {
-  return <button className="square" onClick={handleSquareClick}>{value}</button>;
+function Square({value, hightlight, handleSquareClick}) {
+  return <button className={hightlight?'hightlight-square': 'square'} onClick={handleSquareClick}>{value}</button>;
 }
 
-function Board({row, col, boardValues, onCellClick}) {
+function Board({row, col, boardValues, hightlightCells, onCellClick}) {
   function handleSquareClick(idx) {
     const r = parseInt(idx / col)
     const c = idx % col
     onCellClick(r, c)
+  }
+
+  function isHightlightCell(idx) {
+    if (!hightlightCells) {
+      return false
+    }
+    for (let v of hightlightCells) {
+      if (v == idx) {
+        return true
+      }
+    }
+    return false
   }
 
   let board = [];
@@ -17,7 +29,7 @@ function Board({row, col, boardValues, onCellClick}) {
     for (let j = 0; j < col; j++) {
       let idx = i*col+j
       let value = boardValues[idx]
-      cols.push(<Square key={idx} value={value} handleSquareClick={() => handleSquareClick(idx)}/>)
+      cols.push(<Square key={idx} value={value} hightlight={isHightlightCell(idx)} handleSquareClick={() => handleSquareClick(idx)}/>)
     }
     board.push(<div key={i} className="board-row">{cols}</div>)
   }
@@ -27,11 +39,13 @@ function Board({row, col, boardValues, onCellClick}) {
   </>
 }
 
-function StateBanner({winner, nextPlayer}) {
+function StateBanner({winner, full, nextPlayer}) {
   let state = null;
   if (winner) {
     state = "Winner: " + winner
-  } else {
+  } else if  (full) {
+    state = "Game draw"
+  }  else {
     state = "Next player: " + nextPlayer
   }
   return <div className='status'>{state}</div>
@@ -97,11 +111,23 @@ export default function Game() {
     return currentStep % 2 === 0 ? 'X' : 'O'
   }
 
+  function isFull(boardValues) {
+    if (!boardValues) {
+      return false
+    }
+    for (let v of boardValues) {
+      if (!v) {
+        return false
+      }
+    }
+    return true
+  }
+
   return (
     <div className='game'>
       <div className='game-board'>
-        <StateBanner winner={winner} nextPlayer={nextPlayer}/>
-        <Board row={3} col={3} boardValues={boardValues} onCellClick={handleCellClick}/>
+        <StateBanner winner={winner} full={isFull(boardValues)} nextPlayer={nextPlayer}/>
+        <Board row={3} col={3} boardValues={boardValues} hightlightCells={winnerPos} onCellClick={handleCellClick}/>
       </div>
       <div className='game-info'>
         <HistoryPanel historys={history} jumpTo={jumpTo}/>
@@ -128,4 +154,4 @@ function findWinner(squares) {
     }
   }
   return null;
-}
+} 
