@@ -51,12 +51,14 @@ function StateBanner({winner, full, nextPlayer}) {
   return <div className='status'>{state}</div>
 }
 
-function HistoryPanel({historys, jumpTo}) {
+function HistoryPanel({historys, stepHistorys, jumpTo}) {
   const [ascOrder, setAscOrder] = useState(true)
   let moves = historys.map((boardValues, step) => {
     let desc;
     if (step > 0) {
-      desc = "Go to move #" + step
+      const stepHistory = stepHistorys[step]
+      desc = "Player " + stepHistory.player +" go to move #" + step + "(" + stepHistory.row + ", " + stepHistory.col + ")"
+
     } else {
       desc = "Go to game start"
     }
@@ -76,6 +78,7 @@ function HistoryPanel({historys, jumpTo}) {
 export default function Game() {
   let [row, col] = [3, 3]
   const [history, setHistory] = useState([Array(row*col).fill(null)])
+  const [stepHistory, setStepHistory] = useState([null])
   const [curStep, setCurStep] = useState(0)
 
   const boardValues = history.at(curStep)
@@ -101,6 +104,7 @@ export default function Game() {
     next[idx] = calculatePlayer(curStep)
     setCurStep(curStep + 1)
     setHistory([...history.slice(0, curStep+1), next])
+    setStepHistory([...stepHistory.slice(0, curStep+1), {row: r, col: c, player: nextPlayer}])
   }
 
   function jumpTo(step) {
@@ -130,7 +134,7 @@ export default function Game() {
         <Board row={3} col={3} boardValues={boardValues} hightlightCells={winnerPos} onCellClick={handleCellClick}/>
       </div>
       <div className='game-info'>
-        <HistoryPanel historys={history} jumpTo={jumpTo}/>
+        <HistoryPanel historys={history} stepHistorys={stepHistory} jumpTo={jumpTo}/>
       </div>
     </div>
   )
